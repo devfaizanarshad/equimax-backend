@@ -27,6 +27,10 @@ db.connect((err) => {
   }
 });
 
+app.get("/api/hello",(req, res)=>{
+    res.status(200).json({ message: "Hello World!!!" });
+})
+
 // POST Endpoint to handle form submission
 app.post("/api/submit-form", (req, res) => {
 
