@@ -13,7 +13,9 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "mysql2": "^3.12.0"
+    "mysql2": "^3.12.0",
+    "textmagic-client": "^2.0.23575",
+    "textmagic-rest-client": "^1.0.11"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"
