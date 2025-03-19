@@ -14,6 +14,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "mysql2": "^3.12.0",
+    "nodemailer": "^6.10.0",
     "textmagic-client": "^2.0.23575",
     "textmagic-rest-client": "^1.0.11"
   },
