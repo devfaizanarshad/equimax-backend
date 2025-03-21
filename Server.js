@@ -14,22 +14,22 @@ app.use(express.json());
 
 // Nodemailer Setup for Email using 1&1 IONOS
 const transporter = nodemailer.createTransport({
-  host: 'smtp.ionos.com',  // 1&1 IONOS SMTP server
-  port: 465,               // Use 465 for SSL or 587 for TLS
-  secure: true,            // Set to true if using SSL
+  host: "smtp.ionos.com",
+  port: 465, // SSL port
+  secure: true,
   auth: {
-    user: 'Deals@equimaxmanagement.com',  // Your full email address
-    pass: 'Winter@25!',                  // Your email password (or app password if 2FA is enabled)
+    user: "Deals@equimaxmanagement.com",
+    pass: "Winter@25!", // Use app password if 2FA is enabled
   },
 });
 
-// MySQL Connection (Directly in Code)
+// MySQL Connection Pool
 const db = mysql.createPool({
-  host: "maglev.proxy.rlwy.net",    
-  user: "root",                     
-  password: "XMPmMPlDUEpfctzkdhHrfhDMTOvDzCoW",  
-  database: "railway",              
-  port: 52224,                      
+  host: "maglev.proxy.rlwy.net",
+  user: "root",
+  password: "XMPmMPlDUEpfctzkdhHrfhDMTOvDzCoW",
+  database: "railway",
+  port: 52224,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -45,7 +45,7 @@ db.getConnection((err, connection) => {
   }
 });
 
-// POST Endpoint to handle form submission
+// API Endpoint for Form Submission
 app.post("/api/submit-form", (req, res) => {
   const {
     borrowerType,
@@ -60,6 +60,10 @@ app.post("/api/submit-form", (req, res) => {
     phone,
     consent,
   } = req.body;
+
+  if (!fullName || !email || !phone) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
 
   const sql = `
     INSERT INTO loan_applications (
@@ -85,14 +89,19 @@ app.post("/api/submit-form", (req, res) => {
   db.query(sql, values, (err, result) => {
     if (err) {
       console.error("Error inserting data:", err.message);
-      return res.status(500).json({ message: "Failed to save form data" });
+      return res.status(500).json({ message: "Database error" });
     }
 
     console.log("Form data saved successfully");
 
-    // Prepare the email content
     const firstName = fullName.split(" ")[0]; // Extract first name
-    const htmlMessage = `
+
+    // Thank-You Email to User
+    const userMailOptions = {
+      from: "Deals@equimaxmanagement.com",
+      to: email,
+      subject: "Thank You for Your Application - Equimax",
+      html: `
     <!DOCTYPE html>
     <html>
       <head>
@@ -174,37 +183,61 @@ app.post("/api/submit-form", (req, res) => {
         </div>
       </body>
     </html>
-    `;
-    
-
-    // Email options
-    const mailOptions = {
-      from: 'Deals@equimaxmanagement.com', // Sender address (your email)
-      to: email,                    // Receiver's email (the one provided by the user)
-      subject: "Thank You for Your Interest – Next Steps with Equimax",
-      html: htmlMessage,                // The body of the email
+    ;
+      `,
     };
 
-    // Send email using Nodemailer
-    transporter.sendMail(mailOptions, (err, info) => {
-      if (err) {
-        console.error("Error sending email:", err);
-        return res.status(500).json({
-          message: "Form data saved but email failed to send",
-          error: err.message,
-        });
-      }
+    // Lead Submission Email to Admin
+    const adminMailOptions = {
+      from: "Deals@equimaxmanagement.com",
+      to: "Deals@equimaxmanagement.com",
+      subject: "New Lead Submission - Equimax",
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+          <h2 style="color: #d9534f;">New Lead Submitted</h2>
+          <p><strong>Full Name:</strong> ${fullName}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Phone:</strong> ${phone}</p>
+          <p><strong>Borrower Type:</strong> ${borrowerType}</p>
+          <p><strong>Loan Type:</strong> ${loanType}</p>
+          <p><strong>Construction Type:</strong> ${constructionType}</p>
+          <p><strong>Loan Amount:</strong> ${loanAmount}</p>
+          <p><strong>Property Type:</strong> ${propertyType}</p>
+          <p><strong>Property State:</strong> ${propertyState}</p>
+          <p><strong>Referral Source:</strong> ${referralSource}</p>
+          <p><strong>Consent:</strong> ${consent ? "Yes" : "No"}</p>
+          <hr/>
+          <p style="font-size: 12px; color: #888;">Submitted on: ${new Date().toLocaleString()}</p>
+        </div>
+      `,
+    };
 
-      console.log("Email sent successfully! Info:", info);
-      res.status(200).json({
-        message: "Form data saved & email sent successfully",
-        insertId: result.insertId,
-      });
+    // Send Thank-You Email to User
+    transporter.sendMail(userMailOptions, (userErr, userInfo) => {
+      if (userErr) {
+        console.error("Error sending user email:", userErr);
+      } else {
+        console.log("User email sent:", userInfo.response);
+      }
+    });
+
+    // Send Lead Submission Email to Admin
+    transporter.sendMail(adminMailOptions, (adminErr, adminInfo) => {
+      if (adminErr) {
+        console.error("Error sending admin email:", adminErr);
+      } else {
+        console.log("Admin email sent:", adminInfo.response);
+      }
+    });
+
+    res.status(200).json({
+      message: "Form submitted successfully",
+      insertId: result.insertId,
     });
   });
 });
 
-// Test GET Endpoint
+// Test Route
 app.get("/api/hello", (req, res) => {
   res.status(200).json({ message: "Hello World!!!" });
 });
