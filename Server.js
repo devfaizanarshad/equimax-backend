@@ -27,9 +27,9 @@ const transporter = nodemailer.createTransport({
 const db = mysql.createPool({
   host: "maglev.proxy.rlwy.net",    
   user: "root",                     
-  password: "ayppHlyWnpncdeijflmjCDeodbiPgkzU",  
+  password: "XMPmMPlDUEpfctzkdhHrfhDMTOvDzCoW",  
   database: "railway",              
-  port: 36661,                      
+  port: 52224,                      
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
