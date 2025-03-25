@@ -201,11 +201,11 @@ app.post("/api/submit-form", async (req, res) => {
       }
     });
 
-    //const userPromise = sendPriorityEmail(userMailOptions);
+    const userPromise = sendPriorityEmail(userMailOptions);
 
     // Wait for both but prioritize admin
 
-    // Send Lead Submission Email to Admin
+     Send Lead Submission Email to Admin
     // transporter.sendMail(adminMailOptions, (adminErr, adminInfo) => {
     //   if (adminErr) {
     //     console.error("Error sending admin email:", adminErr);
