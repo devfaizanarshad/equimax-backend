@@ -201,18 +201,18 @@ app.post("/api/submit-form", async (req, res) => {
       }
     });
 
-    //const userPromise = sendPriorityEmail(userMailOptions);
+    const userPromise = sendPriorityEmail(userMailOptions);
 
     // Wait for both but prioritize admin
 
-    // Send Lead Submission Email to Admin
-    // transporter.sendMail(adminMailOptions, (adminErr, adminInfo) => {
-    //   if (adminErr) {
-    //     console.error("Error sending admin email:", adminErr);
-    //   } else {
-    //     console.log("Admin email sent:", adminInfo.response);
-    //   }
-    // });
+    //Send Lead Submission Email to Admin
+    transporter.sendMail(adminMailOptions, (adminErr, adminInfo) => {
+      if (adminErr) {
+        console.error("Error sending admin email:", adminErr);
+      } else {
+        console.log("Admin email sent:", adminInfo.response);
+      }
+    });
 
     res.status(200).json({
       message: "Form submitted successfully",
