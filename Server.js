@@ -171,11 +171,26 @@ app.post("/api/submit-form", async (req, res) => {
         priority: 'high' // Set high priority flag
       };
   
-    // Send both emails first
-    const [adminResult, userResult] = await Promise.allSettled([
-      sendPriorityEmail(adminMailOptions),
-      sendPriorityEmail(userMailOptions)
-    ]);  
+    // Send emails with retry logic
+    const sendWithRetry = async (mailOptions, retries = 3) => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          return await sendPriorityEmail(mailOptions);
+        } catch (error) {
+          if (i === retries - 1) throw error;
+          console.log(`Retrying email (${i+1}/${retries})...`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+    };
+
+    // Send emails and save to database
+    const [emailResults, dbResult] = await Promise.all([
+      Promise.allSettled([
+        sendWithRetry(adminMailOptions),
+        sendWithRetry(userMailOptions)
+      ])
+    ]);
 
   const sql = `
     INSERT INTO loan_applications (
@@ -206,8 +221,18 @@ app.post("/api/submit-form", async (req, res) => {
 
     console.log("Form data saved successfully");
 
+        // Analyze email results
+    const errors = [];
+    emailResults.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        const type = index === 0 ? 'Admin' : 'User';
+        console.error(`${type} email failed:`, result.reason);
+        errors.push(`${type} email failed`);
+      }
+    });
 
-    const userPromise = sendPriorityEmail(userMailOptions);
+
+    //const userPromise = sendPriorityEmail(userMailOptions);
 
     // Wait for both but prioritize admin
 
