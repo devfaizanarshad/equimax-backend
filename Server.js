@@ -135,16 +135,15 @@ app.post("/api/submit-form", async (req, res) => {
   // };
 
   // Send Thank-You Email to User
-  transporter.sendMail(userMailOptions, (userErr, userInfo) => {
-    if (userErr) {
-      console.error("Error sending user email:", userErr);
-    } else {
-      console.log("User email sent:", userInfo.response);
-    }
-  });
+  // transporter.sendMail(userMailOptions, (userErr, userInfo) => {
+  //   if (userErr) {
+  //     console.error("Error sending user email:", userErr);
+  //   } else {
+  //     console.log("User email sent:", userInfo.response);
+  //   }
+  // });
   
-  const userPromise = sendPriorityEmail(userMailOptions);
-
+  // const userPromise = sendPriorityEmail(userMailOptions);
 
       // 1. First Send Admin Email Immediately
       const adminMailOptions = {
@@ -172,9 +171,11 @@ app.post("/api/submit-form", async (req, res) => {
         priority: 'high' // Set high priority flag
       };
   
-      // Send admin email first without waiting
-      const adminPromise = sendPriorityEmail(adminMailOptions);
-  
+    // Send both emails first
+    const [adminResult, userResult] = await Promise.allSettled([
+      sendPriorityEmail(adminMailOptions),
+      sendPriorityEmail(userMailOptions)
+    ]);  
 
   const sql = `
     INSERT INTO loan_applications (
